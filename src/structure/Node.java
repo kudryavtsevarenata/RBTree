@@ -1,17 +1,23 @@
 package structure;
 
-public class Node<T extends Comparable<T>> {
-    T value;
+public class Node<K extends Comparable<K>, V> {
+    K key;
+    V value;
     boolean isBlack;
-    Node<T> parent;
-    Node<T> left;
-    Node<T> right;
-    public Node(T value){
+    Node<K, V> parent;
+    Node<K,V> left;
+    Node<K,V> right;
+    public Node(K key, V value){
+        this.key = key;
         this.value = value;
         this.isBlack = false;
     }
 
-    public T getValue() {
+    public K getKey() {
+        return key;
+    }
+
+    public V getValue() {
         return value;
     }
 
@@ -23,27 +29,27 @@ public class Node<T extends Comparable<T>> {
         isBlack = black;
     }
 
-    public Node<T> getParent() {
+    public Node<K,V> getParent() {
         return parent;
     }
 
-    public void setParent(Node<T> parent) {
+    public void setParent(Node<K,V> parent) {
         this.parent = parent;
     }
 
-    public Node<T> getLeft() {
+    public Node<K,V> getLeft() {
         return left;
     }
 
-    public void setLeft(Node<T> left) {
+    public void setLeft(Node<K,V> left) {
         this.left = left;
     }
 
-    public Node<T> getRight() {
+    public Node<K,V> getRight() {
         return right;
     }
 
-    public void setRight(Node<T> right) {
+    public void setRight(Node<K,V> right) {
         this.right = right;
     }
 }
