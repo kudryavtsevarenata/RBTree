@@ -21,6 +21,14 @@ public class Node<K extends Comparable<K>, V> {
         return value;
     }
 
+    public void setKey(K key) {
+        this.key = key;
+    }
+
+    public void setValue(V value) {
+        this.value = value;
+    }
+
     public boolean isBlack() {
         return isBlack;
     }
