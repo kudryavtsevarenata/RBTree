@@ -3,10 +3,13 @@ package structure;
 public class RBTree<K extends Comparable<K>,V> {
     Node<K,V> root;
     public RBTree(){
+        this.root = NilNode.getInstance();
     }
     public RBTree(K key, V value){
         this.root = new Node<>(key, value);
         this.root.setBlack(true);
+        this.root.setLeft(NilNode.getInstance());
+        this.root.setRight(NilNode.getInstance());
     }
 
     public Node<K, V> getRoot() {
@@ -28,8 +31,7 @@ public class RBTree<K extends Comparable<K>,V> {
         node.setParent(grand);
         parent.setRight(node.getLeft());
 
-        if (node.getLeft() != null)
-            node.getLeft().setParent(parent);
+        node.getLeft().setParent(parent);
 
         parent.setParent(node);
         node.setLeft(parent);
@@ -49,8 +51,7 @@ public class RBTree<K extends Comparable<K>,V> {
         node.setParent(grand);
         parent.setLeft(node.getRight());
 
-        if (node.getRight() != null )
-            node.getRight().setParent(parent);
+        node.getRight().setParent(parent);
 
         parent.setParent(node);
         node.setRight(parent);
@@ -73,7 +74,7 @@ public class RBTree<K extends Comparable<K>,V> {
             } else{
                 uncle = grand.getLeft();
             }
-            if (uncle != null && !uncle.isBlack()){
+            if (!uncle.isBlack()){
                 uncle.setBlack(true);
                 parent.setBlack(true);
                 grand.setBlack(false);
@@ -106,14 +107,16 @@ public class RBTree<K extends Comparable<K>,V> {
     }
     public void insert(K key, V value){
         Node<K,V> node = new Node<>(key, value);
-        if (this.root == null){
+        if (this.root == NilNode.getInstance()){
             node.setBlack(true);
             this.root = node;
+            this.root.setLeft(NilNode.getInstance());
+            this.root.setRight(NilNode.getInstance());
             return;
         }
         Node<K,V> current = this.root;
         Node<K,V> parent = null;
-        while (current != null){
+        while (current != NilNode.getInstance()){
             parent = current;
             if (current.getKey().compareTo(key) > 0){
                 current = current.getLeft();
@@ -127,6 +130,8 @@ public class RBTree<K extends Comparable<K>,V> {
         } else{
             parent.setRight(node);
         }
+        node.setLeft(NilNode.getInstance());
+        node.setRight(NilNode.getInstance());
         fixInsert(node);
     }
     public void remove(K key){
@@ -136,8 +141,7 @@ public class RBTree<K extends Comparable<K>,V> {
         }
         boolean needToBalance;
         Node<K,V> movedUp;
-        Node<K,V> parent = toRemove.getParent();
-        if (!(toRemove.getLeft() != null && toRemove.getRight() != null)){
+        if (!(toRemove.getLeft() != NilNode.getInstance() && toRemove.getRight() != NilNode.getInstance())){
             movedUp = removeWithZeroOrOne(toRemove);
             needToBalance = toRemove.isBlack();
         } else{
@@ -149,74 +153,68 @@ public class RBTree<K extends Comparable<K>,V> {
             needToBalance = inOrderSuccessor.isBlack();
         }
         if (needToBalance){
-            if (movedUp == null){
-                if (parent.getLeft() != null){
-//                    rightRotation(parent.getLeft());
-
-                } else{
-//                    leftRotation(parent.getRight());
-                }
-            } else
-                fixDeletion(movedUp);
-
+            fixDeletion(movedUp);
         }
     }
-    private void fixDeletion(Node<K,V> node){
+    private void fixDeletion(Node<K,V> node){ // TODO: пофиксить, удаление корня, написать тесты (проверить ВСЕ случаи)
         Node<K,V> parent = node.getParent();
         Node<K,V> brother;
-        if (parent.getLeft() == node){
-            brother = parent.getRight();
-            if (!brother.isBlack()) {
-                leftRotation(brother);
-                brother.setBlack(true);
-                parent.setBlack(false);
-            } else{ // null
-                if ((brother.getLeft() == null || brother.getLeft().isBlack())
-                        && (brother.getRight() == null || brother.getRight().isBlack())){
-                    brother.setBlack(false);
-                    parent.setBlack(true);
-                } else if ((brother.getLeft() != null && !brother.getLeft().isBlack())
-                        && (brother.getRight() == null || brother.getRight().isBlack())){
-                    brother.setBlack(false);
-                    brother.getLeft().setBlack(true);
-                    rightRotation(brother.getLeft());
-                }else if (brother.getRight() != null && !brother.getRight().isBlack()){
-                    brother.setBlack(parent.isBlack());
-                    brother.getRight().setBlack(true);
-                    parent.setBlack(true);
+        while (node.isBlack() && node != this.root){
+            if (node.getParent().getLeft() == node){
+                brother = parent.getRight();
+                if (!brother.isBlack()){
+                    brother.setBlack(true);
+                    parent.setBlack(false);
                     leftRotation(brother);
                 }
-            }
-        } else{
-            brother = parent.getLeft();
-            if (!brother.isBlack()) {
-                rightRotation(brother);
-                brother.setBlack(true);
-                parent.setBlack(false);
-            } else if (brother.isBlack()){ // null
                 if (brother.getLeft().isBlack() && brother.getRight().isBlack()){
                     brother.setBlack(false);
-                    parent.setBlack(true);
-                } else if (!brother.getRight().isBlack() && brother.getLeft().isBlack()){
-                    brother.setBlack(false);
-                    brother.getRight().setBlack(true);
-                    leftRotation(brother.getRight());
-                }else if (!brother.getLeft().isBlack()){
+                } else {
+                    if (brother.getRight().isBlack()){
+                        brother.getLeft().setBlack(true);
+                        brother.setBlack(false);
+                        rightRotation(brother.getLeft());
+                    }
                     brother.setBlack(parent.isBlack());
-                    brother.getLeft().setBlack(true);
                     parent.setBlack(true);
+                    brother.getRight().setBlack(true);
+                    leftRotation(parent.getRight());
+                    node = this.root;
+                }
+            } else{
+                brother = parent.getLeft();
+                if (!brother.isBlack()){
+                    brother.setBlack(true);
+                    parent.setBlack(false);
                     rightRotation(brother);
+                }
+                if (brother.getLeft().isBlack() && brother.getRight().isBlack()){
+                    brother.setBlack(false);
+                }
+                else{
+                    if (brother.getLeft().isBlack()){
+                        brother.getRight().setBlack(true);
+                        brother.setBlack(false);
+                        leftRotation(brother.getRight());
+                    }
+                    brother.setBlack(parent.isBlack());
+                    parent.setBlack(true);
+                    brother.getLeft().setBlack(true);
+                    rightRotation(parent.getLeft());
+                    node = this.root;
                 }
             }
         }
+//        node.setBlack(true);
+        this.root.setBlack(true);
     }
     private Node<K,V> removeWithZeroOrOne(Node<K, V> toRemove){
         Node<K,V> parent = toRemove.getParent();
-        Node<K,V> toBind = null;
+        Node<K,V> toBind = null; // ?
         if (parent == null){
-            this.root = null;
+            this.root = NilNode.getInstance();
         } else{
-            if (toRemove.getLeft() != null){
+            if (toRemove.getLeft() != NilNode.getInstance()){
                 toBind = toRemove.getLeft();
             } else{
                 toBind = toRemove.getRight();
@@ -226,14 +224,13 @@ public class RBTree<K extends Comparable<K>,V> {
             } else{
                 parent.setRight(toBind);
             }
-            if (toBind != null)
-                toBind.setParent(parent);
+            toBind.setParent(parent);
         }
         toRemove.setParent(null);
         return toBind;
     }
     private Node<K,V> findMin(Node<K,V> node){
-        while (node.getLeft() != null){
+        while (node.getLeft() != NilNode.getInstance()){
             node = node.getLeft();
         }
         return node;
@@ -246,7 +243,7 @@ public class RBTree<K extends Comparable<K>,V> {
     }
     public Node<K,V> searchNode(K key){
         Node<K,V> current = this.root;
-        while(current != null){
+        while(current != NilNode.getInstance()){
             if (current.getKey().equals(key)){
                 return current;
             }
@@ -262,7 +259,7 @@ public class RBTree<K extends Comparable<K>,V> {
         inOrderHelper(this.root);
     }
     private void inOrderHelper(Node<K,V> node){
-        if (node != null){
+        if (node != NilNode.getInstance()){
             inOrderHelper(node.getLeft());
             System.out.println(node.getValue());
             inOrderHelper(node.getRight());
