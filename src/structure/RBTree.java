@@ -135,6 +135,9 @@ public class RBTree<K extends Comparable<K>,V> {
         fixInsert(node);
     }
     public void remove(K key){
+        if (key == null){
+            return;
+        }
         Node<K,V> toRemove = searchNode(key);
         if (toRemove == null){
             return;
@@ -156,7 +159,7 @@ public class RBTree<K extends Comparable<K>,V> {
             fixDeletion(movedUp);
         }
     }
-    private void fixDeletion(Node<K,V> node){ // TODO: пофиксить, удаление корня, написать тесты (проверить ВСЕ случаи)
+    private void fixDeletion(Node<K,V> node){
         Node<K,V> parent = node.getParent();
         Node<K,V> brother;
         while (node.isBlack() && node != this.root){
@@ -205,14 +208,20 @@ public class RBTree<K extends Comparable<K>,V> {
                 }
             }
         }
-//        node.setBlack(true);
+        node.setBlack(true);
         this.root.setBlack(true);
     }
     private Node<K,V> removeWithZeroOrOne(Node<K, V> toRemove){
         Node<K,V> parent = toRemove.getParent();
-        Node<K,V> toBind = null; // ?
+        Node<K,V> toBind;
         if (parent == null){
-            this.root = NilNode.getInstance();
+            if (toRemove.getLeft() != NilNode.getInstance()){
+                this.root = toRemove.getLeft();
+                toBind = toRemove.getLeft();
+            } else{
+                this.root = toRemove.getRight();
+                toBind = toRemove.getRight();
+            }
         } else{
             if (toRemove.getLeft() != NilNode.getInstance()){
                 toBind = toRemove.getLeft();
@@ -265,7 +274,6 @@ public class RBTree<K extends Comparable<K>,V> {
             inOrderHelper(node.getRight());
         }
     }
-    // TODO: удаление,
     // TODO: объединение,
     // TODO: разделение,
 }
