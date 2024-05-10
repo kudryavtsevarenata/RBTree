@@ -11,6 +11,9 @@ public class RBTree<K extends Comparable<K>,V> {
         this.root.setLeft(NilNode.getInstance());
         this.root.setRight(NilNode.getInstance());
     }
+    public RBTree(Node<K,V> node){
+        this.root = node;
+    }
 
     public Node<K, V> getRoot() {
         return root;
@@ -239,16 +242,115 @@ public class RBTree<K extends Comparable<K>,V> {
         return toBind;
     }
     private Node<K,V> findMin(Node<K,V> node){
+        if (node == NilNode.getInstance()){
+            return node;
+        }
         while (node.getLeft() != NilNode.getInstance()){
             node = node.getLeft();
         }
         return node;
     }
-    public void join(RBTree<K,V> t){
-
+    private Node<K,V> findMax(Node<K,V> node){
+        if (node == NilNode.getInstance()){
+            return node;
+        }
+        while (node.getRight() != NilNode.getInstance()){
+            node = node.getRight();
+        }
+        return node;
     }
-    public void split(K key){
+    private boolean checkCorrectForJoin(RBTree<K,V> t, K key){
+        K maxValue = this.findMin(t.getRoot()).getKey();
+        K minValue = t.findMax(this.root).getKey();
+        return key.compareTo(minValue) >= 0 && key.compareTo(maxValue) <= 0;
+    }
+    public Node<K,V> join(RBTree<K,V> t, K key, V value){
+        if (!this.checkCorrectForJoin(t, key)){
+            throw new IllegalArgumentException("can't join, you should provide condition T1(this) <= key <= T2");
+        }
+        Node<K,V> node = joinHelper(this, t, key, value);
+        this.root = node;
+        return node;
+    }
+    private Node<K,V> joinHelper(RBTree<K,V> t1, RBTree<K,V> t2, K key, V value){
+        int bh1 = getBlackHeight(t1.getRoot());
+        int bh2 = getBlackHeight(t2.getRoot());
+        Node<K,V> node = new Node<>(key, value);
+        if (bh1 == bh2){
+            node.setBlack(true);
+            node.setLeft(t1.getRoot());
+            t1.getRoot().setParent(node);
+            node.setRight(t2.getRoot());
+            t2.getRoot().setParent(node);
+        } else if (bh1 > bh2){
+            int curBH = bh1;
+            Node<K,V> current = t1.getRoot();
+            while (curBH != bh2){
+                current = current.getRight();
+                if (current.isBlack()){
+                    --curBH;
+                }
+            }
+            node.setParent(current.getParent());
+            current.getParent().setRight(node);
 
+            node.setLeft(current);
+            node.setRight(t2.getRoot());
+
+            current.setParent(node);
+            t2.getRoot().setParent(node);
+
+            fixInsert(node);
+
+            node = t1.getRoot();
+        } else{
+            int curBH = bh2;
+            Node<K,V> current = t2.getRoot();
+            while (curBH != bh1){
+                current = current.getLeft();
+                if (current.isBlack()){
+                    --curBH;
+                }
+            }
+            node.setParent(current.getParent());
+            current.getParent().setLeft(node);
+
+            node.setLeft(t1.getRoot());
+            node.setRight(current);
+
+            current.setParent(node);
+            t1.getRoot().setParent(node);
+
+            fixInsert(node);
+            node = t2.getRoot();
+        }
+        return node;
+    }
+    public Pair<Node<K,V>> split(K key){
+        return splitHelper(this.root, key);
+    }
+    private Pair<Node<K,V>> splitHelper(Node<K,V> node, K key){
+        if (node == NilNode.getInstance()){
+            return new Pair<Node<K,V>>(NilNode.getInstance(), NilNode.getInstance());
+        }
+        if (key.compareTo(node.getKey()) < 0){
+            Pair<Node<K,V>> p = splitHelper(node.getLeft(), key);
+            return new Pair<>(p.getFirst(), joinHelper(new RBTree<>(p.getSecond()), new RBTree<>(node.getRight()), node.getKey(), node.getValue()));
+        } else{
+            Pair<Node<K,V>> p = splitHelper(node.getRight(), key);
+            return new Pair<>(joinHelper(new RBTree<>(node.getLeft()), new RBTree<>(p.getFirst()), node.getKey(), node.getValue()), node.getRight());
+        }
+    }
+    private int getBlackHeight(Node<K,V> node){
+        int bh = 0;
+        node = node.getLeft();
+        while (node != NilNode.getInstance() && node != null){
+            if (node.isBlack()){
+                ++bh;
+            }
+            node = node.getLeft();
+        }
+        return bh;
     }
     public Node<K,V> searchNode(K key){
         Node<K,V> current = this.root;
@@ -274,6 +376,4 @@ public class RBTree<K extends Comparable<K>,V> {
             inOrderHelper(node.getRight());
         }
     }
-    // TODO: объединение,
-    // TODO: разделение,
 }
