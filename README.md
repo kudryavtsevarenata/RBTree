@@ -13,5 +13,5 @@
 
 1. Insert(Node)
 2. Remove(Node)
-3. Join(T1, T2) - $O(T_1*h-T_2*h)=O(log(n))$
+3. Join(T1, T2) - $O(T_1h-T_2h)=O(log(n))$
 4. Split(T, k) - $O(log(n))$
